@@ -1,6 +1,11 @@
 from bs4 import BeautifulSoup
 
 
+class InvalidPageException(Exception):
+    """Raised when we've hit a page that doesn't have the necessary
+    values to parse, i.e. the app ID."""
+
+
 class ParseAppStorePage:
     def __init__(self, source_page):
         """Takes in the html from an app store page as a string.
@@ -14,7 +19,7 @@ class ParseAppStorePage:
         self.source_page = source_page
 
     def parse(self):
-        soup = BeautifulSoup(self.source_page)
+        soup = BeautifulSoup(self.source_page, 'html.parser')
 
         # fields we will capture
         # app id: 1121971067
@@ -37,6 +42,11 @@ class ParseAppStorePage:
         # top_in_app_purchases: Premium Golden ... $1.99
         # customer_reviews: title, rating, written_by, content
 
+        app_id_tag = soup.find('meta', {'name': 'apple:content_id'})
+        if app_id_tag is None:
+            raise InvalidPageException("No App ID found.")
+        print(app_id_tag['content'])
+
 
 if __name__ == '__main__':
-    ParseAppStorePage(open('App Store app example.htm').read())
+    ParseAppStorePage(open('App Store app example.htm').read()).parse()
