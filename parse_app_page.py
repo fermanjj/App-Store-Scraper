@@ -1,4 +1,5 @@
 from bs4 import BeautifulSoup
+import pprint
 
 
 class InvalidPageException(Exception):
@@ -17,6 +18,28 @@ class ParseAppStorePage:
         :type source_page: str
         """
         self.source_page = source_page
+
+        self.output_dict = dict(
+            app_id='',
+            app_name='',
+            description='',
+            price='',
+            category='',
+            last_updated='',
+            version='',
+            size='',
+            languages=[],
+            seller='',
+            copyright='',
+            app_rating='',
+            compatibility='',
+            current_version_rating_value='',
+            current_version_rating_review_count='',
+            all_versions_rating_value='',
+            all_versions_rating_review_count='',
+            top_in_app_purchases=[],
+            customer_reviews=[]
+        )
 
     def parse(self):
         soup = BeautifulSoup(self.source_page, 'html.parser')
@@ -42,10 +65,25 @@ class ParseAppStorePage:
         # top_in_app_purchases: Premium Golden ... $1.99
         # customer_reviews: title, rating, written_by, content
 
+        # we check to make sure we found an app ID
         app_id_tag = soup.find('meta', {'name': 'apple:content_id'})
         if app_id_tag is None:
             raise InvalidPageException("No App ID found.")
-        print(app_id_tag['content'])
+        # assign app id value here
+        self.output_dict['app_id'] = app_id_tag['content']
+
+        # app name
+        self.output_dict['app_name'] = soup.find('h1', {'itemprop': 'name'}).text
+
+        # get description div
+        description_div = soup.find('div', {'metrics-loc': 'Titledbox_Description'})
+        # get description paragraph and decode raw html
+        description_raw = description_div.p.decode_contents()
+        # assign description, replacing break tags as line feeds
+        self.output_dict['description'] = description_raw.replace('<br/>', '\n')
+
+        # testing
+        pprint.pprint(self.output_dict)
 
 
 if __name__ == '__main__':
