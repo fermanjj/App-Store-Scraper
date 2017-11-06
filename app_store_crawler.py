@@ -193,6 +193,11 @@ class CrawlAppStore:
         """
         source = self.get_request(url)
         parsed = ParseAppStorePage(source)
+        try:
+            parsed.parse()
+        except Exception as e:
+            print(url)
+            raise e
         with self.db_lock:
             parsed.write_out()
         self.search_semaphore.release()
