@@ -2,6 +2,7 @@ import sqlite3
 import threading
 import re
 import time
+import random
 from urllib import parse
 from string import ascii_uppercase
 import requests
@@ -16,7 +17,7 @@ class CrawlAppStore:
 
     def __init__(self):
         self.db_lock = threading.Lock()
-        self.search_semaphore = threading.BoundedSemaphore(2)
+        self.search_semaphore = threading.BoundedSemaphore(1)
         self.last_found_links = []
 
     def fetch_category_crawl_prog(self, url):
@@ -213,6 +214,7 @@ class CrawlAppStore:
             print(e)
             time.sleep(3)
         finally:
+            time.sleep(random.randint(3, 8))
             self.search_semaphore.release()
 
     def crawl_app_pages(self, url_list):
