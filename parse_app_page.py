@@ -85,8 +85,10 @@ class ParseAppStorePage:
         # assign description, replacing break tags as line feeds
         self.output_dict['description'] = description_raw.replace('<br/>', '\n')
 
-        # price
-        self.output_dict['price'] = soup.find('div', {'itemprop': 'price'}).text
+        # price (this field isn't always there, i.e. TV apps)
+        price_tag = soup.find('div', {'itemprop': 'price'})
+        if price_tag is not None:
+            self.output_dict['price'] = price_tag.text
 
         # category
         self.output_dict['category'] = soup.find('span', {'itemprop': 'applicationCategory'}).text
