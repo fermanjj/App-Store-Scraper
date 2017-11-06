@@ -1,7 +1,8 @@
-from string import ascii_uppercase
 import sqlite3
 import threading
+import re
 from urllib import parse
+from string import ascii_uppercase
 import requests
 from bs4 import BeautifulSoup
 from parse_app_page import ParseAppStorePage
@@ -54,7 +55,7 @@ class CrawlAppStore:
         start_url_parse = parse.urlparse(start_url)
         cleaned_start_url = parse.urlunparse((
             start_url_parse.scheme, start_url_parse.netloc,
-            start_url_parse.path, '', ''
+            start_url_parse.path, start_url_parse.params, '', ''
         ))
 
         # create a duplicate list of uppercase letters
@@ -116,8 +117,9 @@ class CrawlAppStore:
         :rtype: list
         """
         soup = BeautifulSoup(source, 'html.parser')
-        all_links = soup.find_all('')
-        return all_links
+        href_regex = r'https://itunes\.apple\.com/us/app/.*/id[0-9]*\?mt=8'
+        all_links = soup.find_all('a', {'href': re.compile(href_regex)})
+        return [x['href'] for x in all_links]
 
     def save_category_crawl_prog(self, url, letter, page):
         """Writes out the progress of the categories crawl
@@ -136,10 +138,11 @@ class CrawlAppStore:
                 update_statement = """
                 REPLACE INTO app_store_crawl_categories_prog
                 VALUES (?, ?, ?)
+                WHERE url = ?
                 """
                 cursor.execute(
                     update_statement,
-                    (url, letter, page)
+                    (url, letter, page, url)
                 )
                 conn.commit()
 
