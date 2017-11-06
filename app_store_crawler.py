@@ -16,6 +16,7 @@ class CrawlAppStore:
     def __init__(self):
         self.db_lock = threading.Lock()
         self.search_semaphore = threading.BoundedSemaphore(8)
+        self.last_found_links = []
 
     def fetch_category_crawl_prog(self, url):
         """Gets the current progress of the crawl for
@@ -64,10 +65,10 @@ class CrawlAppStore:
 
         # loop through the letters and take out those we've already
         # searched, based on the last starting position
-        for x in range(len(letters)):
-            if letter == letters[x]:
+        for _ in range(len(letters)):
+            if letter == letters[0]:
                 break
-            letters.pop(x)
+            letters.pop(0)
 
         # here we override the earlier assignment of letter
         # because we're now at the point we want to start at.
@@ -83,6 +84,9 @@ class CrawlAppStore:
                 links = self.parse_category_page(source_page)
                 if not links:
                     break
+                if links == self.last_found_links:
+                    break
+                self.last_found_links = links
                 self.write_out_links(links)
                 page_count += 1
                 self.save_category_crawl_prog(start_url, letter, page_count)
