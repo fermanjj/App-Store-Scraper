@@ -173,7 +173,26 @@ class ParseAppStorePage:
         # customer reviews (this may not be there)
         customer_reviews_div = soup.find('div', {'class': 'customer-reviews'})
         if customer_reviews_div is not None:
-            pass
+            all_customer_reviews = []
+            for review in customer_reviews_div.find_all('div', {'class': 'customer-review'}):
+                title = review.find('span', {'class': 'customerReviewTitle'}).text
+                rating_div = review.find('div', {'class': 'rating'})
+                rating_parsed = self.parse_rating(rating_div['aria-label'])
+
+                # get the user info and clean it up
+                user_span = review.find('span', {'class': 'user-info'}).text
+                user_clean = re.sub('\s\s', ' ', user_span)
+                while '  ' in user_clean:
+                    user_clean = re.sub('\s\s', ' ', user_clean)
+                user_clean = re.sub('^by ', '', user_clean).strip()
+
+                content = review.find('p', {'class': 'content'}).text
+
+                all_customer_reviews.append({
+                    'title': title, 'rating': rating_parsed,
+                    'user': user_clean, 'content': content
+                })
+            self.output_dict['customer_reviews'] = all_customer_reviews
 
         # testing
         pprint.pprint(self.output_dict)
@@ -189,7 +208,7 @@ class ParseAppStorePage:
         :rtype: str
         """
         # searches for the rating in the string and the word half
-        regex = r'(?P<rating>[0-9]) (?:(?P<half>and a half stars)|(?P<not_half>star[s].))'
+        regex = r'(?P<rating>[0-9]) (?:(?P<half>and a half stars)|(?P<not_half>star[s]?))'
 
         # run the regex search
         rating_search = re.search(regex, rating)
