@@ -105,11 +105,12 @@ class ParseAppStorePage:
         size_tag = soup.find('span', text='Size: ')
         self.output_dict['size'] = size_tag.next_sibling
 
-        # languages
+        # languages (field is not always there)
         language_regex = r'Language[s]?: '
         language_tag = soup.find('span', text=re.compile(language_regex))
-        all_languages = language_tag.next_sibling.split(', ')
-        self.output_dict['languages'] = all_languages
+        if language_tag is not None:
+            all_languages = language_tag.next_sibling.split(', ')
+            self.output_dict['languages'] = all_languages
 
         # seller
         seller_tag = soup.find('span', {'itemprop': 'author'})
