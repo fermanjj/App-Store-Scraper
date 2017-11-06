@@ -1,6 +1,7 @@
 import sqlite3
 import threading
 import re
+import time
 from urllib import parse
 from string import ascii_uppercase
 import requests
@@ -167,7 +168,8 @@ class CrawlAppStore:
         headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_1) '
                                  'AppleWebKit/537.36 (KHTML, like Gecko) '
                                  'Chrome/62.0.3202.75 Safari/537.36'}
-        return requests.get(url, headers=headers).text
+        r = requests.get(url, headers=headers)
+        return r.text
 
     def crawl_app_pages_from_db(self):
         """Fetch the list of urls from the db and search."""
@@ -203,13 +205,15 @@ class CrawlAppStore:
         parsed = ParseAppStorePage(source)
         try:
             parsed.parse()
+            with self.db_lock:
+                parsed.write_out()
+            self.remove_searched_url(url)
         except Exception as e:
             print(url)
-            raise e
-        with self.db_lock:
-            parsed.write_out()
-        self.remove_searched_url(url)
-        self.search_semaphore.release()
+            print(e)
+            time.sleep(3)
+        finally:
+            self.search_semaphore.release()
 
     def crawl_app_pages(self, url_list):
         """Given a list of urls, starts crawling them
