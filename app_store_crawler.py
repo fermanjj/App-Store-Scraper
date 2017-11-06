@@ -15,6 +15,7 @@ class CrawlAppStore:
 
     def __init__(self):
         self.db_lock = threading.Lock()
+        self.search_semaphore = threading.BoundedSemaphore(8)
 
     def fetch_category_crawl_prog(self, url):
         """Gets the current progress of the crawl for
@@ -167,6 +168,32 @@ class CrawlAppStore:
                 results = [x[0] for x in cursor.fetchall()]
         self.crawl_app_pages(results)
 
+    def remove_searched_url(self, url):
+        """Remove a url from the app_urls table.
+
+        :param url:
+        :type url: str
+        """
+        with self.db_lock:
+            with sqlite3.connect(self.db) as conn:
+                cursor = conn.cursor()
+                delete_statement = """
+                DELETE FROM app_store_app_urls WHERE url = ?
+                """
+                cursor.execute(delete_statement, (url,))
+
+    def search_app_page(self, url):
+        """Search a single url, parse and write out.
+
+        :param url:
+        :type url: str
+        """
+        source = self.get_request(url)
+        parsed = ParseAppStorePage(source)
+        with self.db_lock:
+            parsed.write_out()
+        self.search_semaphore.release()
+
     def crawl_app_pages(self, url_list):
         """Given a list of urls, starts crawling them
         and uses the parser to parse and write out.
@@ -174,10 +201,17 @@ class CrawlAppStore:
         :param url_list:
         :type url_list: list
         """
-        pass
+        for url in url_list:
+            self.search_semaphore.acquire()
+            threading.Thread(
+                target=self.search_app_page, daemon=1,
+                args=(url,)
+            ).start()
 
 
 if __name__ == '__main__':
+
     category = 'https://itunes.apple.com/us/genre/ios-games/id6014?mt=8'
     c = CrawlAppStore()
-    c.crawl_category_page(category)
+    # c.crawl_category_page(category)
+    c.crawl_app_pages_from_db()
