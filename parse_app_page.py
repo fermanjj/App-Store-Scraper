@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import pprint
+import re
 
 
 class InvalidPageException(Exception):
@@ -124,24 +125,66 @@ class ParseAppStorePage:
 
         # current version rating
         ratings_current_version_tag = soup.find('div', text='Current Version:')
+        # check to make sure we found it
         if ratings_current_version_tag is not None:
-            # parse
+            # if so, parse
             div = ratings_current_version_tag.find_next('div')
+            # check for the rating value in the page
             rating_value_span = div.find('span', {'itemprop': 'ratingValue'})
             if rating_value_span is not None:
                 self.output_dict['current_version_rating_value'] = rating_value_span.text
             else:
-                pass
+                # otherwise, parse it out of the aria-label
+                self.output_dict['current_version_rating_value'] = self.parse_rating(div['aria-label'])
+            # parse the rating count
             rating_count_span = div.find('span', {'class': 'rating-count'})
             rating_count = rating_count_span.text.replace(' Ratings', '')
             self.output_dict['current_version_rating_review_count'] = rating_count
 
         # all versions rating
         ratings_all_versions_tag = soup.find('div', text='All Versions:')
-
+        # check to make sure we found it
+        if ratings_all_versions_tag is not None:
+            # if so, parse
+            div = ratings_all_versions_tag.find_next('div')
+            # check for the rating value in the page
+            rating_value_span = div.find('span', {'itemprop': 'ratingValue'})
+            if rating_value_span is not None:
+                self.output_dict['all_versions_rating_value'] = rating_value_span.text
+            else:
+                # otherwise, parse it out of the aria-label
+                self.output_dict['all_versions_rating_value'] = self.parse_rating(div['aria-label'])
+            # parse the rating count
+            rating_count_span = div.find('span', {'class': 'rating-count'})
+            rating_count = rating_count_span.text.replace(' Ratings', '')
+            self.output_dict['all_versions_rating_review_count'] = rating_count
 
         # testing
         pprint.pprint(self.output_dict)
+
+    @staticmethod
+    def parse_rating(rating):
+        """Takes a string like "4 and a half stars, 736 Ratings"
+        and parses the number of ratings to be 4.5
+
+        :param rating:
+        :type rating: str
+        :return: A string of the rating
+        :rtype: str
+        """
+        # searches for the rating in the string and the word half
+        regex = r'(?P<rating>[0-9]) (?:(?P<half>and a half stars)|(?P<not_half>star[s].))'
+
+        # run the regex search
+        rating_search = re.search(regex, rating)
+
+        # assign the rating value
+        rating_value = rating_search.group('rating')
+        # if the word half appeared, then add .5 to the rating
+        if rating_search.group('half'):
+            rating_value += '.5'
+
+        return rating_value
 
 
 if __name__ == '__main__':
