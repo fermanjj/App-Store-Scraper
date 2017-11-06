@@ -156,7 +156,9 @@ class CrawlAppStore:
         :type url: str
         :rtype: str
         """
-        headers = {'User-Agent': 'Not Python'}
+        headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_1) '
+                                 'AppleWebKit/537.36 (KHTML, like Gecko) '
+                                 'Chrome/62.0.3202.75 Safari/537.36'}
         return requests.get(url, headers=headers).text
 
     def crawl_app_pages_from_db(self):
@@ -181,6 +183,7 @@ class CrawlAppStore:
                 DELETE FROM app_store_app_urls WHERE url = ?
                 """
                 cursor.execute(delete_statement, (url,))
+                conn.commit()
 
     def search_app_page(self, url):
         """Search a single url, parse and write out.
