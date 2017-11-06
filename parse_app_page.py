@@ -119,7 +119,8 @@ class ParseAppStorePage:
         self.output_dict['app_rating'] = soup.find('div', {'class': 'app-rating'}).text
 
         # compatibility
-        self.output_dict['compatibility'] = soup.find('span', {'itemprop': 'operatingSystem'}).text
+        compatibility = soup.find('span', {'itemprop': 'operatingSystem'}).text.replace('\xa0', ' ')
+        self.output_dict['compatibility'] = compatibility
 
         # customer ratings (these fields may not appear)
 
@@ -158,6 +159,21 @@ class ParseAppStorePage:
             rating_count_span = div.find('span', {'class': 'rating-count'})
             rating_count = rating_count_span.text.replace(' Ratings', '')
             self.output_dict['all_versions_rating_review_count'] = rating_count
+
+        # top in app purchases (This field may not be there)
+        in_app_purchases_div = soup.find('div', {'metrics-loc': 'Titledbox_Top In-App Purchases'})
+        if in_app_purchases_div is not None:
+            in_app_purchases = []
+            for i, li in enumerate(in_app_purchases_div.find('ol').find_all('li'), 1):
+                title = li.find('span', {'class': 'in-app-title'}).text
+                price = li.find('span', {'class': 'in-app-price'}).text
+                in_app_purchases.append({'title': title, 'price': price, 'order': i})
+            self.output_dict['top_in_app_purchases'] = in_app_purchases
+
+        # customer reviews (this may not be there)
+        customer_reviews_div = soup.find('div', {'class': 'customer-reviews'})
+        if customer_reviews_div is not None:
+            pass
 
         # testing
         pprint.pprint(self.output_dict)
