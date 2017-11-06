@@ -200,6 +200,7 @@ class CrawlAppStore:
             raise e
         with self.db_lock:
             parsed.write_out()
+        self.remove_searched_url(url)
         self.search_semaphore.release()
 
     def crawl_app_pages(self, url_list):
