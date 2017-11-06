@@ -38,7 +38,7 @@ class CrawlAppStore:
                 if len(result) == 0:
                     return 1, 'A'
                 else:
-                    return int(result[0][0]), result[0][1]
+                    return int(result[0][1]), result[0][2]
 
     def crawl_category_page(self, start_url):
         """Given a category/sub-category page,
@@ -131,19 +131,23 @@ class CrawlAppStore:
         :param letter:
         :type letter: str
         :param page:
-        :type page: str
+        :type page: int
         """
         with self.db_lock:
             with sqlite3.connect(self.db) as conn:
                 cursor = conn.cursor()
-                update_statement = """
-                REPLACE INTO app_store_crawl_categories_prog
-                VALUES (?, ?, ?)
+                delete_statement = """
+                DELETE FROM app_store_crawl_categories_prog
                 WHERE url = ?
                 """
+                cursor.execute(delete_statement, (url,))
+                insert_statement = """
+                INSERT INTO app_store_crawl_categories_prog
+                VALUES (?, ?, ?)
+                """
                 cursor.execute(
-                    update_statement,
-                    (url, letter, page, url)
+                    insert_statement,
+                    (url, page, letter)
                 )
                 conn.commit()
 
@@ -222,5 +226,5 @@ if __name__ == '__main__':
 
     category = 'https://itunes.apple.com/us/genre/ios-games/id6014?mt=8'
     c = CrawlAppStore()
-    # c.crawl_category_page(category)
-    c.crawl_app_pages_from_db()
+    c.crawl_category_page(category)
+    # c.crawl_app_pages_from_db()
