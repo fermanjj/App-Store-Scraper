@@ -1,3 +1,17 @@
+create table app_store_app_urls
+(
+	url TEXT
+)
+;
+
+create table app_store_crawl_categories_prog
+(
+	url TEXT,
+	page TEXT,
+	letter TEXT
+)
+;
+
 create table app_store_customer_reviews
 (
 	app_id TEXT,
