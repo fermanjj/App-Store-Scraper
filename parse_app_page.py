@@ -25,7 +25,8 @@ class ParseAppStorePage:
             description='',
             price='',
             category='',
-            last_updated='',
+            published_date='',
+            last_updated_date='',
             version='',
             size='',
             languages=[],
@@ -50,7 +51,8 @@ class ParseAppStorePage:
         # description: Worlds #1 Archery Game...
         # price: Free
         # category: Games
-        # updated: Aug 30, 2017
+        # published_date: 2016-11-23 09:39:55
+        # last_updated_date: Aug 30, 2017
         # version: 1.0.18
         # size: 142 MB
         # languages: English, Arabic, ...
@@ -81,6 +83,62 @@ class ParseAppStorePage:
         description_raw = description_div.p.decode_contents()
         # assign description, replacing break tags as line feeds
         self.output_dict['description'] = description_raw.replace('<br/>', '\n')
+
+        # price
+        self.output_dict['price'] = soup.find('div', {'itemprop': 'price'}).text
+
+        # category
+        self.output_dict['category'] = soup.find('span', {'itemprop': 'applicationCategory'}).text
+
+        # date_published and last_update_date
+        published_date_span = soup.find('span', {'itemprop': 'datePublished'})
+        self.output_dict['published_date'] = published_date_span['content']
+        self.output_dict['last_updated_date'] = published_date_span.text
+
+        # version
+        self.output_dict['version'] = soup.find('span', {'itemprop': 'softwareVersion'}).text
+
+        # size
+        size_tag = soup.find('span', text='Size: ')
+        self.output_dict['size'] = size_tag.next_sibling
+
+        # languages
+        language_tag = soup.find('span', text='Languages: ')
+        all_languages = language_tag.next_sibling.split(', ')
+        self.output_dict['languages'] = all_languages
+
+        # seller
+        seller_tag = soup.find('span', {'itemprop': 'author'})
+        self.output_dict['seller'] = seller_tag.span.text
+
+        # copyright
+        self.output_dict['copyright'] = soup.find('li', {'class': 'copyright'}).text
+
+        # app rating
+        self.output_dict['app_rating'] = soup.find('div', {'class': 'app-rating'}).text
+
+        # compatibility
+        self.output_dict['compatibility'] = soup.find('span', {'itemprop': 'operatingSystem'}).text
+
+        # customer ratings (these fields may not appear)
+
+        # current version rating
+        ratings_current_version_tag = soup.find('div', text='Current Version:')
+        if ratings_current_version_tag is not None:
+            # parse
+            div = ratings_current_version_tag.find_next('div')
+            rating_value_span = div.find('span', {'itemprop': 'ratingValue'})
+            if rating_value_span is not None:
+                self.output_dict['current_version_rating_value'] = rating_value_span.text
+            else:
+                pass
+            rating_count_span = div.find('span', {'class': 'rating-count'})
+            rating_count = rating_count_span.text.replace(' Ratings', '')
+            self.output_dict['current_version_rating_review_count'] = rating_count
+
+        # all versions rating
+        ratings_all_versions_tag = soup.find('div', text='All Versions:')
+
 
         # testing
         pprint.pprint(self.output_dict)
