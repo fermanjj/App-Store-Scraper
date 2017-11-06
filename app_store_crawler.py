@@ -15,7 +15,7 @@ class CrawlAppStore:
 
     def __init__(self):
         self.db_lock = threading.Lock()
-        self.search_semaphore = threading.BoundedSemaphore(8)
+        self.search_semaphore = threading.BoundedSemaphore(2)
         self.last_found_links = []
 
     def fetch_category_crawl_prog(self, url):
@@ -230,5 +230,5 @@ if __name__ == '__main__':
 
     category = 'https://itunes.apple.com/us/genre/ios-games/id6014?mt=8'
     c = CrawlAppStore()
-    c.crawl_category_page(category)
-    # c.crawl_app_pages_from_db()
+    # c.crawl_category_page(category)
+    c.crawl_app_pages_from_db()
