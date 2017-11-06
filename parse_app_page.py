@@ -1,5 +1,4 @@
 from bs4 import BeautifulSoup
-import pprint
 import re
 import sqlite3
 
@@ -105,7 +104,8 @@ class ParseAppStorePage:
         self.output_dict['size'] = size_tag.next_sibling
 
         # languages
-        language_tag = soup.find('span', text='Languages: ')
+        language_regex = r'Language[s]?: '
+        language_tag = soup.find('span', text=re.compile(language_regex))
         all_languages = language_tag.next_sibling.split(', ')
         self.output_dict['languages'] = all_languages
 
@@ -194,9 +194,6 @@ class ParseAppStorePage:
                     'user': user_clean, 'content': content
                 })
             self.output_dict['customer_reviews'] = all_customer_reviews
-
-        # testing
-        pprint.pprint(self.output_dict)
 
         return self.output_dict
 
