@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import pprint
 import re
+import sqlite3
 
 
 class InvalidPageException(Exception):
@@ -197,6 +198,90 @@ class ParseAppStorePage:
         # testing
         pprint.pprint(self.output_dict)
 
+        return self.output_dict
+
+    # noinspection PyTypeChecker,SqlDialectInspection
+    def write_out(self):
+        """Override this method to write out
+        however you'd like."""
+        db = 'app_store_db'
+        # using a with statement here automatically
+        # closes the connection upon completion
+        with sqlite3.connect(db) as conn:
+            cursor = conn.cursor()
+
+            # insert into main table
+            main_table_insert_statement = """
+            INSERT INTO app_store_main VALUES (
+              ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+              ?, ?, ?, ?, ?, ?
+            )
+            """
+            cursor.execute(
+                main_table_insert_statement,
+                (
+                    self.output_dict['app_id'],
+                    self.output_dict['app_name'],
+                    self.output_dict['description'],
+                    self.output_dict['price'],
+                    self.output_dict['category'],
+                    self.output_dict['published_date'],
+                    self.output_dict['last_updated_date'],
+                    self.output_dict['version'],
+                    self.output_dict['size'],
+                    self.output_dict['seller'],
+                    self.output_dict['copyright'],
+                    self.output_dict['app_rating'],
+                    self.output_dict['compatibility'],
+                    self.output_dict['current_version_rating_value'],
+                    self.output_dict['current_version_rating_review_count'],
+                    self.output_dict['all_versions_rating_value'],
+                    self.output_dict['all_versions_rating_review_count']
+                )
+            )
+
+            languages_insert_statement = """
+            INSERT INTO app_store_languages VALUES (?,?)
+            """
+            for language in self.output_dict['languages']:
+                cursor.execute(
+                    languages_insert_statement,
+                    (self.output_dict['app_id'], language)
+                )
+
+            purchases_insert_statement = """
+            INSERT INTO app_store_top_in_app_purchases VALUES 
+            (?, ?, ?, ?)
+            """
+            for in_app_purchase in self.output_dict['top_in_app_purchases']:
+                cursor.execute(
+                    purchases_insert_statement,
+                    (
+                        self.output_dict['app_id'],
+                        in_app_purchase['order'],
+                        in_app_purchase['title'],
+                        in_app_purchase['price']
+                    )
+                )
+
+            customer_reviews_insert_statement = """
+            INSERT INTO app_store_customer_reviews VALUES 
+            (?, ?, ?, ?, ?)
+            """
+            for customer_review in self.output_dict['customer_reviews']:
+                cursor.execute(
+                    customer_reviews_insert_statement,
+                    (
+                        self.output_dict['app_id'],
+                        customer_review['title'],
+                        customer_review['rating'],
+                        customer_review['user'],
+                        customer_review['content']
+                    )
+                )
+
+            conn.commit()
+
     @staticmethod
     def parse_rating(rating):
         """Takes a string like "4 and a half stars, 736 Ratings"
@@ -223,4 +308,6 @@ class ParseAppStorePage:
 
 
 if __name__ == '__main__':
-    ParseAppStorePage(open('App Store app example.htm').read()).parse()
+    p = ParseAppStorePage(open('App Store app example.htm').read())
+    p.parse()
+    p.write_out()
