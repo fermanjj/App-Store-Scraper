@@ -62,8 +62,8 @@ class CrawlAppStore:
             start_url_parse.path, start_url_parse.params, '', ''
         ))
 
-        # create a duplicate list of uppercase letters
-        letters = [x for x in ascii_uppercase]
+        # create a duplicate list of uppercase letters, plus *
+        letters = [x for x in ascii_uppercase] + ['*']
 
         # loop through the letters and take out those we've already
         # searched, based on the last starting position
@@ -169,7 +169,7 @@ class CrawlAppStore:
         headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_1) '
                                  'AppleWebKit/537.36 (KHTML, like Gecko) '
                                  'Chrome/62.0.3202.75 Safari/537.36'}
-        r = requests.get(url, headers=headers)
+        r = requests.get(url, headers=headers, timeout=10)
         return r.text
 
     def crawl_app_pages_from_db(self):
@@ -202,9 +202,9 @@ class CrawlAppStore:
         :param url:
         :type url: str
         """
-        source = self.get_request(url)
-        parsed = ParseAppStorePage(source)
         try:
+            source = self.get_request(url)
+            parsed = ParseAppStorePage(source)
             parsed.parse()
             with self.db_lock:
                 parsed.write_out()
