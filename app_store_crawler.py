@@ -236,5 +236,5 @@ if __name__ == '__main__':
 
     category = 'https://itunes.apple.com/us/genre/ios-games/id6014?mt=8'
     c = CrawlAppStore()
-    # c.crawl_category_page(category)
-    c.crawl_app_pages_from_db()
+    c.crawl_category_page(category)
+    # c.crawl_app_pages_from_db()
