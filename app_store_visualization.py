@@ -117,8 +117,7 @@ def app_id(id):
             <div class='col-xs-6'>
                 <h4>Customer Reviews</h4>
                 {% for cust in cust_results %}
-                    <div><b>{{ cust[1] }}</b> - {{ cust[2] }}, by {{ cust[3] }}<p>{{ cust[4] }}</p></div>
-                    {{ cust }}
+                    <div><b>{{ cust[1] }}</b> - {{ cust[2] }} star(s), by {{ cust[3] }}<p>{{ cust[4] }}</p></div>
                 {% endfor %}
             </div>
         </div>
